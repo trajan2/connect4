@@ -29,6 +29,7 @@ class Connect4:
         #     field = self.field
         field = np.copy(field)
         height = len(field)
+        assert col is not None and field is not None and color is not None
         assert field[0, col] == 0, "col " + str(col) + " already full"
         for h in range(height - 1, -1, -1):
             if field[h, col] == 0:

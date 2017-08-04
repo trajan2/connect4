@@ -64,20 +64,6 @@ class Training:
             if end is None:
                 next_state, best_q, best_next_move, end = self.bestNextMove(next_state, -1)
 
-                # next_state_opponent_view = -1 * next_state
-                # possibleOpponentMoves = Connect4.possibleMoves_static(field=next_state_opponent_view)
-                # Q_opp_max = -1*float("inf")
-                # opp_best_move = None
-                # for possibleMove in possibleOpponentMoves:
-                #     netInput_opponent = Connect4.createNetInput(next_state_opponent_view, possibleMove)
-                #     Q_opp_cur = self.qnet.eval(netInput_opponent)
-                #     if Q_opp_cur > Q_opp_max:
-                #         Q_opp_max = Q_opp_cur
-                #         opp_best_move = possibleMove
-                #
-                # next_next_state, end = Connect4.play_static(col=opp_best_move, field=next_state, color=-1)
-                # print("then the opponent plays", opp_best_move, "for him we can expect", Q_opp_max, "and this ends=", end)
-                # print(next_next_state)
                 if end is not None:
                     #Q_ = self.endReward(end, 1)
                     r = self.endReward(end, 1)  # treat a direct loss next round also as reward
@@ -85,18 +71,7 @@ class Training:
                     # this is the next move, here we will just use the highest q value for us.
                     next_state, best_q, best_move, end = self.bestNextMove(next_state, 1)
                     Q_ = best_q
-                    #
-                    # best_next_next_move = None
-                    # possibleMoves = Connect4.possibleMoves_static(field=next_next_state)
-                    # for possibleMove in possibleMoves:
-                    #     next_next_netInput = Connect4.createNetInput(next_next_state, possibleMove)
-                    #     Q_ = -1 * float("inf")
-                    #     Q_cur = self.qnet.eval(next_next_netInput)
-                    #     if Q_cur > Q_:
-                    #         Q_ = Q_cur
-                    #         best_next_next_move = possibleMove
 
-            #         print("then we should play", best_next_next_move, "for which we expect", Q_)
             netTarget = np.array([reward + self.gamma * Q_]).reshape(1,1)
             print("==> Q(s,a)=", netOutput)
             print("==> r=", reward, " Q_=", Q_)
@@ -105,11 +80,16 @@ class Training:
             netLoss = self.qnet.train(netInput, netTarget)
             netLoss_list.append(netLoss)
             print("---------------")
-
+        self.qnet.save()
         return netLoss_list
 
     def testGame(self):
         c4 = Connect4(self.height, self.width)
+        end = None
+        while end is None:
+            state = c4.field
+            state, best_q, best_next_move, end = self.bestNextMove(state, -1)
+            c4.play(best_next_move)
 
     def bestNextMove(self, state, color):
         state_player_view = np.copy(state) * color

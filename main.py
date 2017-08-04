@@ -7,7 +7,8 @@ import numpy as np
 
 
 learn = training.Training()
-for i in range(1000):
+for i in range(2):
     losses = learn.trainGame()
     print("game:", i, "losses:", losses)
+learn.testGame()
 print("Done")

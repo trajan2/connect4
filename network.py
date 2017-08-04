@@ -6,6 +6,7 @@ import os.path
 
 class Network:
     def __init__(self, height, width, hiddens=(20, 20), model_path=None):
+        self.model_path = model_path
         self.in_dim = width * height + width
         self.hiddens = hiddens
         if model_path is not None and os.path.isfile(model_path):
@@ -29,3 +30,7 @@ class Network:
     def train(self, input, target):
         loss, _ = self.model.train_on_batch(input, target)
         return loss
+
+    def save(self):
+        if self.model_path is not None:
+            self.model.save(self.model_path)
