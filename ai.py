@@ -13,20 +13,19 @@ class AI:
         possibleMoves = c4.possibleMoves()
         if np.random.rand() < epsilon:
             move = possibleMoves[np.random.randint(len(possibleMoves))]
-            print("chose Random move:", move)
+            #print("chose Random move:", move)
         else:
             max_q = -1 * float("inf")
             move = None
             for possibleMove in possibleMoves:
-                state, action = c4.state_action(possibleMove)
-                netInput = c4.netInput(state, action)
+                netInput = c4.createNetInput(c4.field, possibleMove)
                 cur_q = self.qnet.eval(netInput)
                 if max_q < cur_q:
                     move = possibleMove
                     max_q = cur_q
-                print("curq:", cur_q, "is move:", possibleMove)
-            print ("will give max:", max_q, "result move:", move)
+                #print("curq:", cur_q, "is move:", possibleMove)
+            #print ("will give max:", max_q, "result move:", move)
         # order important!
-        state_action = c4.state_action(move)
-        c4.play(move)
-        return state_action
+        state = np.copy(c4.field)
+        _, end = c4.play(move)
+        return state, move, end

@@ -19,6 +19,6 @@ class Network:
         output = self.model.predict(netInput)
         return output
 
-    def train(self, c4):
-        pass
+    def train(self, input, target):
+        self.model.train_on_batch(input, target)
 
