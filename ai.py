@@ -15,19 +15,23 @@ class AI:
         :return: Returns the new state after performing the chosen action and the action itself
         """
 
-        possible_actions = state.possible_actions()
+
         if np.random.rand() < epsilon:
+            possible_actions = state.possible_actions()
             move = possible_actions[np.random.randint(len(possible_actions))]
             #print("chose Random move:", move)
         else:
-            max_q = -1 * float("inf")
-            move = None
-            for possible_action in possible_actions:
-                cur_q = self.qnet.eval(game.create_net_input(state, possible_action))
-                if max_q < cur_q:
-                    move = possible_action
-                    max_q = cur_q
-                #print("curq:", cur_q, "is move:", possibleMove)
-            #print ("will give max:", max_q, "result move:", move)
+            move, _ = self.calc_best_move(state)
 
         return game.play(state, move), move
+
+    def calc_best_move(self, state : game.State):
+        max_q = -1 * float("inf")
+        move = None
+        for possible_action in state.possible_actions():
+            cur_q = self.qnet.eval(game.create_net_input(state, possible_action))
+            if max_q < cur_q:
+                move = possible_action
+                max_q = cur_q
+
+        return move, max_q

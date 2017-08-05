@@ -10,7 +10,7 @@ class Network:
         self.model.add(Dense(hiddens[0], input_dim=self.in_dim))  # input_shape=(self.in_dim,), activation="sigmoid"))
         for i in range(1, len(hiddens)):
             self.model.add(Dense(hiddens[i], activation="sigmoid"))
-        self.model.add(Dense(1, activation="relu"))
+        self.model.add(Dense(1, activation="linear"))
         self.model.compile(loss="mse", metrics=["accuracy"], optimizer="rmsprop")
 
     def eval(self, net_input):
