@@ -4,7 +4,8 @@ import os.path
 
 
 class Network:
-    def __init__(self, in_dim, hiddens=(20, 20), model_path=None):
+    def __init__(self, in_dim=None, hiddens=(20, 20), model_path=None):
+        """either in_dim or model_path has to be set"""
         self.model_path = model_path
         self.in_dim = in_dim
         self.hiddens = hiddens

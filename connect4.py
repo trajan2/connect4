@@ -8,19 +8,21 @@ class Connect4:
         self.width = width
         self.onMove = onMove
         self.winner = None  # None: no winner yet, 0: draw, +/-1 player
+        self.lastMove = None
         if field is None:
             self.field = np.zeros((height, width), dtype=np.int32)  # 0: empty, 1,-1: player 1,-1
         else:
             self.field = np.copy(field)
         # highest row is 0
 
-    def play(self, col: int) -> typing.Union[int, None]:
-        assert col is not None
+    def play(self, move: int) -> typing.Union[int, None]:
+        assert move is not None
+        self.lastMove = move
         for h in range(self.height - 1, -1, -1):
-            if self.field[h, col] == 0:
-                self.field[h, col] = self.onMove
+            if self.field[h, move] == 0:
+                self.field[h, move] = self.onMove
                 break
-        self.winner = self._checkWinner((h, col))
+        self.winner = self._checkWinner((h, move))
         self.onMove *= -1
 
         return self.winner
@@ -28,21 +30,20 @@ class Connect4:
     def _checkWinner(self, position):
         """
         :param position: where the last piece was placed
-        :param field_param: a state, if None use self.field
         :return: -1, 1 for a possible winner, 0 for a draw, False for nothing yet
         """
         directions = [(1, 0), (1, 1), (0, 1), (-1, 1)]
         for d in directions:
             counter = 1
-            cur_pos = game._mapping(position, d, self.height, self.width)
+            cur_pos = Connect4._mapping(position, d, self.height, self.width)
             while cur_pos is not None and self.field[cur_pos] == self.field[position]:
-                cur_pos = game._mapping(cur_pos, d, self.height, self.width)
+                cur_pos = Connect4._mapping(cur_pos, d, self.height, self.width)
                 counter += 1
 
             d_ = tuple((i * -1 for i in d))
-            cur_pos = game._mapping(position, d_, self.height, self.width)
+            cur_pos = Connect4._mapping(position, d_, self.height, self.width)
             while cur_pos is not None and self.field[cur_pos] == self.field[position]:
-                cur_pos = game._mapping(cur_pos, d_, self.height, self.width)
+                cur_pos = Connect4._mapping(cur_pos, d_, self.height, self.width)
                 counter += 1
 
             if counter >= 4:
@@ -68,7 +69,7 @@ class Connect4:
         q_max = -1 * float("inf")
         best_move = None
         for possibleMove in self.possibleMoves():
-            netInput = game.createNetInput(field_player_view, possibleMove)
+            netInput = Connect4.createNetInput(field_player_view, possibleMove)
             q_cur = qnet.eval(netInput)
             if q_cur > q_max:
                 q_max = q_cur
@@ -82,9 +83,3 @@ class Connect4:
         action = np.zeros((1, len(field[0])))
         action[0, move] = 1
         return np.concatenate((state, action), axis=1)
-
-    def showNetInput(self, netInput, reward):
-        print("State")
-        print(netInput[0, :-self.width].reshape((self.height, self.width)))
-        print("Action --> Reward")
-        print(netInput[0, -self.width:], reward)
