@@ -1,13 +1,12 @@
-import numpy as np
 import keras
 from keras.layers.core import Dense
 import os.path
 
 
 class Network:
-    def __init__(self, height, width, hiddens=(20, 20), model_path=None):
+    def __init__(self, in_dim, hiddens=(20, 20), model_path=None):
         self.model_path = model_path
-        self.in_dim = width * height + width
+        self.in_dim = in_dim
         self.hiddens = hiddens
         if model_path is not None and os.path.isfile(model_path):
             print("Loading Model from", model_path)
@@ -19,7 +18,6 @@ class Network:
                 self.model.add(Dense(hiddens[i], activation="relu"))
             self.model.add(Dense(1, activation="linear"))
             self.model.compile(loss="mse", metrics=["accuracy"], optimizer="rmsprop")
-            self.model.save("4x5_20-20-1.h5")
         self.requests = []
 
     def eval(self, netInput):
@@ -31,6 +29,5 @@ class Network:
         loss, _ = self.model.train_on_batch(input, target)
         return loss
 
-    def save(self):
-        if self.model_path is not None:
-            self.model.save(self.model_path)
+    def save(self, model_path):
+        self.model.save(model_path)

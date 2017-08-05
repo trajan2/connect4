@@ -1,14 +1,16 @@
-import training
-from game import Connect4
-import numpy as np
+import rlframework
+from collections import Counter
 
-# state = np.zeros((4,5))
-# res = Connect4.play_static(4, field=state, color=1)
+learn = rlframework.RLFramework(model_path="model.h5")
+for i in range(10):
+    state_list, move_list = learn.playGame()
+    losses = learn.trainGame(state_list, move_list)
+    #print("game:", i, "losses:", losses)
+learn.saveModel("model.h5")
+ends = []
+for i in range(100):
+    ends.append(learn.testGame())
+    #print("test:", i, "end:", ends[-1])
+print(Counter(ends))
+#learn.testGame(verbose=True)
 
-
-learn = training.Training()
-for i in range(2):
-    losses = learn.trainGame()
-    print("game:", i, "losses:", losses)
-learn.testGame()
-print("Done")
