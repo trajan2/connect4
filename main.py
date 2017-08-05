@@ -8,10 +8,13 @@ import numpy as np
 TRAINGAMES_NO = 10
 TESTGAMES_NO = 100
 
+ai_opp = ai.RepeatAI(-1)
+ai_opp = ai.NetAI(network.Network(model_path="model.h5"),-1)
+ai_opp = ai.RepeatVicinityAI(-1)
+
 learn = rlframework.RLFramework(
     model_path="model.h5",
-    #opponent_ai=ai.RepeatAI(-1)
-    opponent_ai=ai.NetAI(network.Network(model_path="model.h5"),-1)
+    opponent_ai=ai_opp
 )
 print("Training on", TRAINGAMES_NO, "games...")
 

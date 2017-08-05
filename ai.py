@@ -38,7 +38,7 @@ class NetAI(AI):
         return move
 
 class RepeatAI(AI):
-    def __init__(selfs, color=-1):
+    def __init__(self, color=-1):
         super().__init__(color)
 
     def nextMove(self, c4: Game):
@@ -46,3 +46,14 @@ class RepeatAI(AI):
             return c4.lastMove
         else:
             return np.random.choice(c4.possibleMoves())
+
+class RepeatVicinityAI(AI):
+    def __init(self, color=-1):
+        super().__init__(color)
+
+    def nextMove(self, c4: Game):
+        if c4.lastMove is not None:
+            vicinty = list(set(c4.possibleMoves()).intersection(range(c4.lastMove-1,c4.lastMove+2)))
+            if len(vicinty) > 0:
+                return np.random.choice(vicinty)
+        return np.random.choice(c4.possibleMoves())
