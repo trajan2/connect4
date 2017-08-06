@@ -65,7 +65,12 @@ class Training:
             #     net_input = game.create_net_input(state, action)
             #     self.ai.qnet.train(net_input, np.array([target]))  # actual training
 
-    def test(self, num_test_games:int=2000):
+    def clear_test_results(self, result_file="results"):
+        f = open(result_file + ".csv", 'w')
+        f.write("Number of games, Number of wins, Number of defeats, Number of ties\n")
+        f.close()
+
+    def test(self, num_test_games:int=2000, result_file="results"):
         num_wins = 0
         num_defeats = 0
         num_ties = 0
@@ -99,7 +104,11 @@ class Training:
         print("num_defeats\t", num_defeats, "\t", int((num_defeats / num_test_games) * 100), "%")
         print("num_ties\t", num_ties, "\t", int((num_ties / num_test_games) * 100), "%")
 
-
+        if result_file is not None:
+            text = str(num_test_games) + ", " + str(num_wins) + ", " + str(num_defeats) + ", " + str(num_ties) + "\n"
+            f = open(result_file + ".csv", 'a')
+            f.write(text)
+            f.close()
 
     def store(self, name):
         self.ai.store(name)
