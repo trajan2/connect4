@@ -55,7 +55,7 @@ class RLFramework:
             net_input = Game.create_net_input(c4.field, move)
             net_output = self.qnet.eval(net_input)  # calculate now before moves are played Q(s,a)
 
-            print("we are player 1 in state:\n", c4.field, cond=verbose)
+            print_cond("we are player 1 in state:\n", c4.field, cond=verbose)
             # next state but already inverted, we are player 1
             c4.play(move)
             print_cond("and do action ", move, "which resulted end=", c4.winner, "\n", c4.field, cond=verbose)
