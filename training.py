@@ -1,6 +1,6 @@
 import game
 import ai
-
+import random
 
 class Training:
     def __init__(self, height=4, width=5, load_file=None, gamma=0.96, exploration=0.2):
@@ -24,7 +24,7 @@ class Training:
         # invariant: each state is seen by the current player (every player sets a '1' token)
 
         # add last state to list for negative rewards
-        new_state, action = self.ai.perform_best_move(cur_state, self.exploration)
+        last_state, action = self.ai.perform_best_move(cur_state, self.exploration)
         state_action_list.append((cur_state, action))
 
         # first try: did not work very well on 75.000 games
@@ -64,6 +64,42 @@ class Training:
             #
             #     net_input = game.create_net_input(state, action)
             #     self.ai.qnet.train(net_input, np.array([target]))  # actual training
+
+    def test(self, num_test_games:int=2000):
+        num_wins = 0
+        num_defeats = 0
+        num_ties = 0
+
+        for x in range(num_test_games):
+            print("Test number", x)
+            beginner = random.randint(0, 1)
+            cur_state = game.State(self.height, self.width)
+            cur_player = beginner
+
+            while cur_state.winner is None:
+                if cur_player == 0:
+                    new_state, _ = self.ai.perform_best_move(cur_state)
+                else:
+                    actions = cur_state.possible_actions()
+                    random_action = actions[random.randint(0, len(actions) - 1)]
+                    new_state = game.play(cur_state, random_action)
+
+                cur_state = new_state
+                cur_player = 1 - cur_player
+
+            if cur_state.winner == 0:
+                num_ties += 1
+            elif (cur_state.winner == 1 and beginner == 0) or (cur_state.winner == -1 and beginner == 1):
+                num_wins += 1
+            elif (cur_state.winner == -1 and beginner == 0) or (cur_state.winner == 1 and beginner == 1):
+                num_defeats += 1
+            else: assert False, "Unreachable line of code reached!"
+
+        print("num_wins\t", num_wins, "\t", int((num_wins / num_test_games) * 100), "%")
+        print("num_defeats\t", num_defeats, "\t", int((num_defeats / num_test_games) * 100), "%")
+        print("num_ties\t", num_ties, "\t", int((num_ties / num_test_games) * 100), "%")
+
+
 
     def store(self, name):
         self.ai.store(name)
