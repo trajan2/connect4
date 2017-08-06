@@ -3,10 +3,10 @@ import typing
 
 
 class Connect4:
-    def __init__(self, height=4, width=5, onMove=1, field=None):
+    def __init__(self, height=4, width=5, on_move=1, field=None):
         self.height = height
         self.width = width
-        self.onMove = onMove
+        self.on_move = on_move
         self.winner = None  # None: no winner yet, 0: draw, +/-1 player
         self.lastMove = None
         if field is None:
@@ -20,10 +20,10 @@ class Connect4:
         self.lastMove = move
         for h in range(self.height - 1, -1, -1):
             if self.field[h, move] == 0:
-                self.field[h, move] = self.onMove
+                self.field[h, move] = self.on_move
                 break
         self.winner = self._checkWinner((h, move))
-        self.onMove *= -1
+        self.on_move *= -1
 
         return self.winner
 
@@ -49,7 +49,7 @@ class Connect4:
             if counter >= 4:
                 return self.field[position]
 
-        if len(self.possibleMoves()) == 0:
+        if len(self.possible_moves()) == 0:
             return 0
         return None
 
@@ -61,23 +61,23 @@ class Connect4:
         else:
             return new_pos
 
-    def possibleMoves(self):
+    def possible_moves(self):
         return tuple((i for i in range(len(self.field[0])) if self.field[0,i] == 0))
 
-    def bestNextMove(self, qnet):
-        field_player_view = np.copy(self.field) * self.onMove
+    def best_next_move(self, qnet):
+        field_player_view = np.copy(self.field) * self.on_move
         q_max = -1 * float("inf")
         best_move = None
-        for possibleMove in self.possibleMoves():
-            netInput = Connect4.createNetInput(field_player_view, possibleMove)
-            q_cur = qnet.eval(netInput)
+        for possible_move in self.possible_moves():
+            net_input = Connect4.create_net_input(field_player_view, possible_move)
+            q_cur = qnet.eval(net_input)
             if q_cur > q_max:
                 q_max = q_cur
-                best_move = possibleMove
+                best_move = possible_move
         return best_move, q_max
 
     @staticmethod
-    def createNetInput(field, move):
+    def create_net_input(field, move):
         assert field is not None and move is not None
         state = np.copy(field).reshape(1,-1)
         action = np.zeros((1, len(field[0])))
