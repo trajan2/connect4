@@ -1,21 +1,15 @@
 import training
-from keras.models import save_model
+import sys
+import select
 
 learn = training.Training(5, 7)
+# learn = training.Training(5, 7, "connect4")
 
-for x in range(75000):
+for x in range(1000000):
     print(x)
     learn.play_game()
 
+    if select.select([sys.stdin, ], [], [], 0.0)[0]:
+        break
 
-learn.ai.qnet.model.save("connect4.h5")
-
-# state = game.State(5, 7)
-#
-# while state.winner is None:
-#     state.show()
-#
-#     actions = state.possible_actions()
-#     state = game.play(state, actions[0])
-#
-# state.show()
+learn.store("connect4")
