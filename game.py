@@ -1,9 +1,9 @@
 import numpy as np
 import copy
+import uuid
 
 winning_bonus = 100
 draw_malus = -50
-
 
 class State:
     def __init__(self, height, width):
@@ -12,6 +12,7 @@ class State:
         self.winner = None  # 1 -> beginner has won, -1 -> second player has won, 0 -> draw and None if not finished
         self.round = 0  # counter for number of rounds played yet
         self.field = np.zeros((height, width), dtype=np.int32)  # 0: empty, 1,-1: player 1,-1
+        self.id = str(uuid.uuid4())
 
     def possible_actions(self):
         moves = tuple((Action(i) for i in range(self.width) if self.field[0, i] == 0))
@@ -25,6 +26,22 @@ class State:
         print("State. Winner is ", self.winner, ". Round is ", self.round)
         print(self.field)
 
+    def to_graphviz(self):
+        mapping = {
+            0: "white",
+            1: "yellow",
+            -1: "red"
+        }
+
+        result = "<<table bgcolor=\"blue\" cellspacing=\"5\">"
+        for y in range(self.height):
+            result += "<tr>"
+            for x in range(self.width):
+                result += "<td width=\"15\" height=\"15\" bgcolor=\"" + mapping[self.field[y, x]] + "\">" + "</td>"
+            result += "</tr>"
+        result += "</table>>"
+        return result
+
 
 class Action:
     def __init__(self, move):
@@ -32,6 +49,9 @@ class Action:
 
     def show(self):
         print("Action: ", self.move)
+
+    def to_graphviz(self):
+        return "Column: " + str(self.move)
 
 
 def play(state: State, action: Action):
@@ -41,6 +61,7 @@ def play(state: State, action: Action):
     """
 
     new_state = copy.deepcopy(state)
+    new_state.id = str(uuid.uuid4())
 
     if new_state.winner is not None:
         assert action.move == -1, "Illegal action. Trying to play a token despite of game finished!"

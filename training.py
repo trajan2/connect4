@@ -2,6 +2,7 @@ import game
 import ai
 import random
 import numpy as np
+import graphviz as gv
 
 
 class Training:
@@ -39,7 +40,8 @@ class Training:
         #
         #     # state.show()
         #     # for possible_action in state.possible_actions():
-        #     #    print("Options: ", possible_action.move, " with q_value ", self.ai.qnet.eval(game.create_net_input(next_state, possible_action)))
+        #     #    print("Options: ", possible_action.move, " with q_value ",
+        # self.ai.qnet.eval(game.create_net_input(next_state, possible_action)))
         #     # print("q_value of best move: ", q_value)
         #
         #     net_input = game.create_net_input(state, action)
@@ -47,7 +49,6 @@ class Training:
         #     # print("Reward: ", reward, " Target: ", target)
         #
         #     self.ai.qnet.train(net_input, target)  # actual training
-
 
         # second try: rewards are directly known because of total sequence
         target_one = 0.0
@@ -116,6 +117,46 @@ class Training:
             f = open(result_file + ".csv", 'a')
             f.write(text)
             f.close()
+
+    def create_graph(self, graph_name="connect4"):
+        cur_state = game.State(self.height, self.width)
+
+        g_all = gv.Digraph(format='svg')
+        g_all.graph_attr.update(rankdir="TB")
+
+        with g_all.subgraph(name='cluster_' + str(cur_state.round)) as c:
+            c.attr(style='filled')
+            c.attr(color='lightgrey')
+            c.attr(margin='10px')
+            c.node(cur_state.id, label=cur_state.to_graphviz(), style="filled", fillcolor="limegreen",
+                   shape="rectangle", margin="0.5")
+            c.attr(label='Round ' + str(cur_state.round))
+
+        last = False
+        while cur_state.winner is None or last:
+            new_state, chosen_action = self.ai.perform_best_move(cur_state)
+            with g_all.subgraph(name='cluster_' + str(cur_state.round + 1)) as c:
+                c.attr(style='filled')
+                c.attr(color='lightgrey')
+                c.attr(margin='10px')
+                c.attr(label='Round ' + str(cur_state.round + 1))
+
+                for action in cur_state.possible_actions():
+                    q_value = self.ai.qnet.eval(game.create_net_input(cur_state, action))
+                    action_label = action.to_graphviz() + "\n" + "Q-Value: " + str(round(q_value[0, 0], 3))
+
+                    if chosen_action.move == action.move:
+                        c.node(new_state.id, label=new_state.to_graphviz(), style="filled", fillcolor="limegreen",
+                               shape="rectangle", margin="0.5")
+                        g_all.edge(cur_state.id, new_state.id, label=action_label, penwidth="6", weight="0.9")
+                    else:
+                        tmp_state = game.play(cur_state, action)
+                        c.node(tmp_state.id, label=tmp_state.to_graphviz(), shape="rectangle", margin="0.5")
+                        g_all.edge(cur_state.id, tmp_state.id, label=action_label)
+            cur_state = new_state
+            last = cur_state.winner is None and not last
+
+        g_all.render(filename=graph_name)  # import training
 
     def store(self, name):
         self.ai.store(name)
