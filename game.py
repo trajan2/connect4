@@ -9,7 +9,7 @@ class State:
     def __init__(self, height, width):
         self.height = height
         self.width = width
-        self.winner = None  # 1 -> beginner has won, -1 -> second player has won, 0 -> draw and None if not finished
+        self.winner = None  # 1: current player (1) has won, -1: opponent player (-1) has won, 0 draw, None not finished
         self.round = 0  # counter for number of rounds played yet
         self.field = np.zeros((height, width), dtype=np.int32)  # 0: empty, 1,-1: player 1,-1
         self.id = str(uuid.uuid4())
@@ -23,8 +23,9 @@ class State:
             return tuple([Action(-1)])  # do not play at all (net_input for this action is a zero vector)
 
     def random_action(self):
-        actions = self.possible_actions()
-        return actions[np.random.randint(0, len(actions) - 1)]
+        possible_actions = self.possible_actions()
+        assert len(possible_actions) >= 1
+        return possible_actions[np.random.randint(0, len(possible_actions))]
 
     def show(self):
         print("State. Winner is ", self.winner, ". Round is ", self.round)
@@ -46,6 +47,11 @@ class State:
         result += "</table>>"
         return result
 
+    def absolute_winner(self):
+        if self.round%2 == 1 or self.winner is not None:
+            return self.winner * -1
+        else:
+            return self.winner
 
 class Action:
     def __init__(self, move, rating=None):
@@ -72,6 +78,7 @@ def play(state: State, action: Action):
         assert action.move == -1, "Illegal action. Trying to play a token despite of game finished!"
         new_state.field *= -1
         new_state.round += 1
+        new_state.winner *= -1
         return new_state
 
     h = None
@@ -113,7 +120,7 @@ def check_winner(position, state: State):
             counter += 1
 
         if counter >= 4:
-            return (state.round % 2) * -2 + 1
+            return 1 #(state.round % 2) * -2 + 1
 
     if state.possible_actions()[0].move == -1:  # draw is given if -1 = 'do nothing' is the only option
         return 0
@@ -147,8 +154,8 @@ def get_reward(state: State, action: Action):
     mapping = {
         None: 0,  # game is not finished yet
         0: draw_malus,  # game was a draw
-        1: ((state.round % 2) * -2 + 1) * winning_bonus,  # 1 means the beginning player has won
-        -1: ((state.round % 2) * 2 - 1) * winning_bonus,  # -1 means the second player has won
+        1: winning_bonus, # 1 means the player (1) has won
+        -1: -1 * winning_bonus # -1 means the opponent (-1) has won
     }
 
     return mapping[next_state.winner]

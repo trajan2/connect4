@@ -5,11 +5,12 @@ import os
 
 
 class Network:
-    def __init__(self, in_dim: int, file_name: str = None, hiddens=(100, 100)):
-        self.file_name = file_name
-        if file_name is not None and os.path.exists(file_name+ ".h5"):
-            print("Load model", file_name)
-            self.model = load_model(file_name + ".h5")
+    def __init__(self, in_dim: int, file_name: str, hiddens=(100, 100)):
+        assert file_name is not None
+        self.file_name = file_name+ ".h5"
+        if os.path.exists(self.file_name):
+            print("Load model", self.file_name)
+            self.model = load_model(self.file_name)
             return
 
         print("Create new model")
@@ -27,10 +28,11 @@ class Network:
     def train(self, net_input, target):
         self.model.train_on_batch(net_input, target)
 
-    def store(self, name):
+    def store(self, name=None):
+        if name is None:
+            name = self.file_name
         print("Save model", name)
         self.model.save(name + ".h5")
 
     def __del__(self):
-        if self.file_name is not None:
-            self.store(self.file_name + "_temp" + ".h5")
+        self.store("temp_" + self.file_name)
