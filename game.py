@@ -47,11 +47,6 @@ class State:
         result += "</table>>"
         return result
 
-    def absolute_winner(self):
-        if self.round%2 == 1 or self.winner is not None:
-            return self.winner * -1
-        else:
-            return self.winner
 
 class Action:
     def __init__(self, move, rating=None):
@@ -159,57 +154,3 @@ def get_reward(state: State, action: Action):
     }
 
     return mapping[next_state.winner]
-
-    # def state_action(self, move: int):
-    #    field = np.copy(self.field)
-    #    one_hot = self.moveToOneHot(move)
-    #    reshaped = np.reshape(field, (1, -1))
-    #    #formatted = np.concatenate((reshaped, one_hot), axis=1)
-    #    return reshaped, one_hot
-
-    # def oneHotToMove(self, action):
-    #    return np.argmax(action)
-
-    # def moveToOneHot(self, move):
-    #    one_hot = np.zeros((1, self.width))
-    #    one_hot[0, move] = 1
-    #    return one_hot
-
-    # def createNetInput(self, state, move):
-    #    state_ = np.copy(state).reshape(1,-1)
-    #    action = self.moveToOneHot(move)
-    #    return np.concatenate((state_, action), axis=1)
-
-    # def splitNetInput(self, netInput):
-    #    state = np.copy(netInput[0, :-self.width])
-    #    action = np.copy(netInput[0, -self.width:])
-    #   return state, action
-
-    # def showNetInput(self, netInput, reward):
-    #    print("State")
-    #    print(netInput[0, :-self.width].reshape((self.height, self.width)))
-    #    print("Action --> Reward")
-    #    print(netInput[0, -self.width:], reward)
-
-    # def processAction(self, state, action):
-    #     "returns s+1"
-    #     col = np.argmax(action)
-    #     state = state.reshape((self.height, self.width))
-    #     for h in range(self.height - 1, -1, -1):
-    #         if state[h, col] == 0:
-    #             state[h, col] = 1  # we are always player 1
-    #             break
-    #
-    # def
-    #     possibleOpponentActions = self.possibleMoves(state)
-    #     for possibleOpponentAction in possibleOpponentActions:
-    #
-    #
-    #
-    #     return
-
-    # def show(self):
-    #    return self.field
-
-    # def reset(self):
-    #    self.field = np.zeros((self.height, self.width), dtype=np.int32)

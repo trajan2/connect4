@@ -2,7 +2,7 @@ import game
 import ai
 import numpy as np
 import graphviz as gv
-
+from typing import List
 
 class Training:
     def __init__(self, height=4, width=5, load_file=None, gamma=0.96, exploration=0.2):
@@ -11,7 +11,6 @@ class Training:
         self.height = height
         self.width = width
         self.train_ai = ai.NetAI(game.get_net_input_dim(height, width), load_file)
-
 
     def play_game(self, opponent: ai.AI = None):
         ais = {
@@ -82,7 +81,7 @@ class Training:
         f.write("Number of games, Number of wins, Number of defeats, Number of ties\n")
         f.close()
 
-    def test(self,  opponent: ai.AI, num_test_games: int = 2000, result_file="results", verbose=False, draw_graph=False):
+    def test(self, opponent: ai.AI, num_test_games: int = 2000, result_file="results", verbose=False, draw_graph=False):
         assert opponent is not None
         ais = {
             "t": self.train_ai,
@@ -95,7 +94,6 @@ class Training:
         }
 
 
-
         for x in range(num_test_games):
             print("Test number", x)
             cur_state = game.State(self.height, self.width)
@@ -105,14 +103,7 @@ class Training:
             if draw_graph:
                 g_all = gv.Digraph(format='svg')
                 g_all.graph_attr.update(rankdir="TB")
-
-                with g_all.subgraph(name='cluster_' + str(cur_state.round)) as c:
-                    c.attr(style='filled')
-                    c.attr(color='lightgrey')
-                    c.attr(margin='10px')
-                    c.node(cur_state.id, label=cur_state.to_graphviz(), style="filled", fillcolor="limegreen",
-                           shape="rectangle", margin="0.5")
-                    c.attr(label='Round ' + str(cur_state.round))
+                self.draw_graph_layer(g_all, cur_state, is_top_node=True)
 
             while cur_state.winner is None:
                 # cur_state.show()
@@ -121,33 +112,15 @@ class Training:
                 new_state = game.play(cur_state, action)
 
                 if draw_graph:
-                    with g_all.subgraph(name='cluster_' + str(cur_state.round + 1)) as c:
-                        c.attr(style='filled')
-                        c.attr(color='lightgrey')
-                        c.attr(margin='10px')
-                        c.attr(label='Round ' + str(cur_state.round + 1))
-                        for (possible_action, q_value) in ais[cur_player].last_ratings:
-                            action_label = possible_action.to_graphviz() + "\n" + "Q-Value: " + str(round(float(q_value), 3))
-                            if action.move == possible_action.move:
-                                c.node(new_state.id, label=new_state.to_graphviz(), style="filled",
-                                       fillcolor="limegreen",
-                                       shape="rectangle", margin="0.5")
-                                g_all.edge(cur_state.id, new_state.id, label=action_label, penwidth="6", weight="0.9")
-                            else:
-                                tmp_state = game.play(cur_state, possible_action)
-                                c.node(tmp_state.id, label=tmp_state.to_graphviz(), shape="rectangle", margin="0.5")
-                                g_all.edge(cur_state.id, tmp_state.id, label=action_label)
+                    self.draw_graph_layer(g_all, cur_state, action, new_state, ais[cur_player].last_ratings)
                 cur_state = new_state
                 cur_player = "t" if cur_player == "o" else "o"
             abs_winner = cur_state.winner if cur_player == "o" else cur_state.winner * -1
             results[abs_winner] += 1
             if draw_graph:
-                g_all.render(filename="connect4")  # import training
+                g_all.render(filename="connect4")
 
         print("Results", results)
-        # print("num_wins\t", num_wins, "\t", int((num_wins / num_test_games) * 100), "%")
-        # print("num_defeats\t", num_defeats, "\t", int((num_defeats / num_test_games) * 100), "%")
-        # print("num_ties\t", num_ties, "\t", int((num_ties / num_test_games) * 100), "%")
 
         if result_file is not None:
             text = str(num_test_games) + ", " + str(results[1]) + ", " + str(results[-1]) + ", " + str(results[0]) + "\n"
@@ -155,46 +128,29 @@ class Training:
             f.write(text)
             f.close()
 
-    # def create_graph(self, graph_name="connect4"):
-    #     cur_state = game.State(self.height, self.width)
-    #
-    #     g_all = gv.Digraph(format='svg')
-    #     g_all.graph_attr.update(rankdir="TB")
-    #
-    #     with g_all.subgraph(name='cluster_' + str(cur_state.round)) as c:
-    #         c.attr(style='filled')
-    #         c.attr(color='lightgrey')
-    #         c.attr(margin='10px')
-    #         c.node(cur_state.id, label=cur_state.to_graphviz(), style="filled", fillcolor="limegreen",
-    #                shape="rectangle", margin="0.5")
-    #         c.attr(label='Round ' + str(cur_state.round))
-    #
-    #     last = False
-    #     while cur_state.winner is None or last:
-    #         chosen_action = self.train_ai.next_move(cur_state)
-    #         new_state = game.play(cur_state, chosen_action)
-    #         with g_all.subgraph(name='cluster_' + str(cur_state.round + 1)) as c:
-    #             c.attr(style='filled')
-    #             c.attr(color='lightgrey')
-    #             c.attr(margin='10px')
-    #             c.attr(label='Round ' + str(cur_state.round + 1))
-    #
-    #             for action in cur_state.possible_actions():
-    #                 q_value = self.train_ai.qnet.eval(game.create_net_input(cur_state, action))
-    #                 action_label = action.to_graphviz() + "\n" + "Q-Value: " + str(round(q_value[0, 0], 3))
-    #
-    #                 if chosen_action.move == action.move:
-    #                     c.node(new_state.id, label=new_state.to_graphviz(), style="filled", fillcolor="limegreen",
-    #                            shape="rectangle", margin="0.5")
-    #                     g_all.edge(cur_state.id, new_state.id, label=action_label, penwidth="6", weight="0.9")
-    #                 else:
-    #                     tmp_state = game.play(cur_state, action)
-    #                     c.node(tmp_state.id, label=tmp_state.to_graphviz(), shape="rectangle", margin="0.5")
-    #                     g_all.edge(cur_state.id, tmp_state.id, label=action_label)
-    #         cur_state = new_state
-    #         last = cur_state.winner is None and not last
-    #
-    #     g_all.render(filename=graph_name)  # import training
+    def draw_graph_layer(self, g_all: gv.Digraph, cur_state: game.State, action: game.Action = None,
+                         new_state: game.State = None, last_ratings = None, is_top_node=False, ):
+
+        with g_all.subgraph(name='cluster_' + str(cur_state.round + (0 if is_top_node else 1))) as c:
+            c.attr(style='filled')
+            c.attr(color='lightgrey')
+            c.attr(margin='10px')
+            c.attr(label='Round ' + str(cur_state.round + (0 if is_top_node else 1)))
+            if is_top_node:
+                c.node(cur_state.id, label=cur_state.to_graphviz(), style="filled", fillcolor="limegreen",
+                       shape="rectangle", margin="0.5")
+            else:
+                for (possible_action, q_value) in last_ratings: # ais[cur_player].last_ratings:
+                    action_label = possible_action.to_graphviz() + "\n" + "Q-Value: " + str(round(float(q_value), 3))
+                    if action.move == possible_action.move:
+                        c.node(new_state.id, label=new_state.to_graphviz(), style="filled",
+                               fillcolor="limegreen",
+                               shape="rectangle", margin="0.5")
+                        g_all.edge(cur_state.id, new_state.id, label=action_label, penwidth="6", weight="0.9")
+                    else:
+                        tmp_state = game.play(cur_state, possible_action)
+                        c.node(tmp_state.id, label=tmp_state.to_graphviz(), shape="rectangle", margin="0.5")
+                        g_all.edge(cur_state.id, tmp_state.id, label=action_label)
 
     def store(self, name):
         self.train_ai.store(name)
