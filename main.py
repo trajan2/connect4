@@ -33,15 +33,14 @@
 #
 # g1.render(filename="connect4")  # import training
 
-
 # import sys
 # import select
 # import user
 # import gui
 import training
 
-# learn = training.Training(5, 7)
-learn = training.Training(5, 7, "connect4")
+learn = training.Training(5, 7)
+# learn = training.Training(5, 7, "connect4")
 learn.create_graph()
 
 # while True:

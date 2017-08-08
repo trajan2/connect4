@@ -22,6 +22,10 @@ class State:
         else:
             return tuple([Action(-1)])  # do not play at all (net_input for this action is a zero vector)
 
+    def random_action(self):
+        actions = self.possible_actions()
+        return actions[np.random.randint(0, len(actions) - 1)]
+
     def show(self):
         print("State. Winner is ", self.winner, ". Round is ", self.round)
         print(self.field)
@@ -44,8 +48,9 @@ class State:
 
 
 class Action:
-    def __init__(self, move):
+    def __init__(self, move, rating=None):
         self.move = move
+        self.rating = rating
 
     def show(self):
         print("Action: ", self.move)

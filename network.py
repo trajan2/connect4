@@ -1,13 +1,15 @@
 import keras
 from keras.layers.core import Dense
 from keras.models import load_model
+import os
 
 
 class Network:
-    def __init__(self, in_dim: int, load_file: str = None, hiddens=(100, 100)):
-        if load_file is not None:
-            print("Load model", load_file)
-            self.model = load_model(load_file + ".h5")
+    def __init__(self, in_dim: int, file_name: str = None, hiddens=(100, 100)):
+        self.file_name = file_name
+        if file_name is not None and os.path.exists(file_name+ ".h5"):
+            print("Load model", file_name)
+            self.model = load_model(file_name + ".h5")
             return
 
         print("Create new model")
@@ -28,3 +30,7 @@ class Network:
     def store(self, name):
         print("Save model", name)
         self.model.save(name + ".h5")
+
+    def __del__(self):
+        if self.file_name is not None:
+            self.store(self.file_name + "_temp" + ".h5")
