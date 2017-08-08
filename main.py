@@ -20,7 +20,7 @@ for x in range(1):
 
     if x % 10 == 0:
         learn.store("connect4")
-        #learn.test(opp_ai, 10)
+        learn.test(opp_ai, 10)
         #learn.create_graph()
         #learn.test(learn.train_ai, 100)
 
@@ -30,4 +30,4 @@ for x in range(1):
 
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         break
-learn.test(opp_ai, 1, draw_graph=True)
+learn.test_game(opp_ai, draw_graph=True)
