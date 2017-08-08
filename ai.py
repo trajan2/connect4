@@ -3,6 +3,7 @@ import network
 import game
 from abc import ABCMeta, abstractmethod
 import sys
+import copy
 
 class AI:
     __metaclass__ = ABCMeta
@@ -23,9 +24,12 @@ class AI:
 class RandomAI(AI):
     def __init__(self):
         self.name = "RandomAI"
+        self.last_ratings = []
 
     def next_move(self, state: game.State):
-        return state.random_action()
+        action =  state.random_action()
+        self.last_ratings = [(copy.copy(action), 0)]
+        return action
 
 
 class NetAI(AI):
@@ -43,9 +47,9 @@ class NetAI(AI):
             if max_q < cur_q:
                 action = possible_action
                 max_q = cur_q
-                self.last_ratings.append((possible_action.move, cur_q))
+            self.last_ratings.append((possible_action, cur_q))
         action.rating = max_q
-        return action
+        return copy.copy(action)
 
     def store(self, name):
         self.qnet.store(name)
