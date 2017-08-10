@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 import sys
 import copy
 
+
 class AI:
     __metaclass__ = ABCMeta
     name = None
@@ -21,21 +22,23 @@ class AI:
     def next_move(self, state: game.State):
         pass
 
+
 class RandomAI(AI):
     def __init__(self):
         self.name = "RandomAI"
         self.last_ratings = []
 
     def next_move(self, state: game.State):
-        action =  state.random_action()
+        action = state.random_action()
         self.last_ratings = [(copy.copy(action), 0)]
         return action
 
 
 class NetAI(AI):
     def __init__(self, in_dim: int, load_file=None, hiddens=(100, 100)):
-        self.qnet = network.Network(in_dim, load_file, hiddens=hiddens)
-        self.name = "NetAI/"+str(load_file)
+        self.input_dim = in_dim
+        self.qnet = network.Network(self.input_dim, load_file, hiddens=hiddens)
+        self.name = "NetAI/" + str(load_file)
         self.last_ratings = []
 
     def next_move(self, state: game.State):
@@ -51,9 +54,11 @@ class NetAI(AI):
         action.rating = max_q
         return copy.copy(action)
 
-    def store(self, name):
+    def store(self, name=None):
         self.qnet.store(name)
 
+    def get_input_dim(self):
+        return self.input_dim
 
 class FillupAI(AI):
     def __init__(self):
@@ -64,6 +69,7 @@ class FillupAI(AI):
         if self.column is None:
             self.column = state.random_action()
 
+        i = None
         for i in range(state.height):
             if state.field[i, self.column.move] != 0:
                 break
@@ -71,6 +77,7 @@ class FillupAI(AI):
         if state.field[i, self.column.move] == -1:
             self.column = state.random_action()
         return self.column
+
 
 class HumanAI(AI):
     def __init__(self):
@@ -84,8 +91,8 @@ class HumanAI(AI):
             try:
                 number = int(line)
 
-                if not number in map(lambda x: x.move, state.possible_actions()):
-                    raise ValueError("Move not possible"+str(number))
+                if number not in map(lambda x: x.move, state.possible_actions()):
+                    raise ValueError("Move not possible" + str(number))
                 return game.Action(number)
 
             except ValueError:

@@ -5,6 +5,7 @@ import uuid
 winning_bonus = 100
 draw_malus = -50
 
+
 class State:
     def __init__(self, height, width):
         self.height = height
@@ -115,7 +116,7 @@ def check_winner(position, state: State):
             counter += 1
 
         if counter >= 4:
-            return 1 #(state.round % 2) * -2 + 1
+            return 1  # (state.round % 2) * -2 + 1
 
     if state.possible_actions()[0].move == -1:  # draw is given if -1 = 'do nothing' is the only option
         return 0
@@ -149,8 +150,8 @@ def get_reward(state: State, action: Action):
     mapping = {
         None: 0,  # game is not finished yet
         0: draw_malus,  # game was a draw
-        1: winning_bonus, # 1 means the player (1) has won
-        -1: -1 * winning_bonus # -1 means the opponent (-1) has won
+        1: winning_bonus,  # 1 means the player (1) has won
+        -1: -1 * winning_bonus  # -1 means the opponent (-1) has won
     }
 
     return mapping[next_state.winner]

@@ -2,15 +2,16 @@ import game
 import ai
 import numpy as np
 import graphviz as gv
-from typing import List
+
 
 class Training:
-    def __init__(self, height=4, width=5, load_file=None, gamma=0.96, exploration=0.2):
+    def __init__(self, height=4, width=5, load_file=None, gamma=0.96, exploration=0.2, result_file="results"):
         self.gamma = gamma
         self.exploration = exploration
         self.height = height
         self.width = width
         self.train_ai = ai.NetAI(game.get_net_input_dim(height, width), load_file)
+        self.result_file = result_file + ".csv"
 
     def play_game(self, opponent: ai.AI = None):
         ais = {
@@ -20,7 +21,7 @@ class Training:
         state_action_list = []
 
         cur_state = game.State(self.height, self.width)
-        cur_ai_id = np.random.randint(0,2)
+        cur_ai_id = np.random.randint(0, 2)
         last = False
         while cur_state.winner is None or last:
             action = ais[cur_ai_id].next_exploring_move(cur_state, self.exploration)
@@ -70,18 +71,33 @@ class Training:
                 target_two = game.get_reward(state, action) + self.gamma * target_two
                 target = target_two
             target_list.append(target)
+        return target_list
 
-    # def train_batch(self, state_action_list, target_list):
+    # def train_batch(self, games_list):
+    #     reversed_games = [reversed(x) for x in games_list]
+    #     reversed_targets = [reversed(self.calc_targets(x)) for x in games_list]
+    #     max_len = max(len(x) for x in games_list)
     #
-    #     net_input = game.create_net_input(state, action)
-    #     self.train_ai.qnet.train(net_input, np.array([target]))  # actual training
+    #     for pos in range(max_len):
+    #         relevant_game_idx = [ind for ind, cur_game in enumerate(games_list) if len(cur_game) > pos]
+    #
+    #         batch_input = np.empty((self.train_ai.input_dim, len(relevant_game_idx)))
+    #         batch_target = np.empty((1, len(relevant_game_idx)))
+    #
+    #         for x in range(len(relevant_game_idx)):
+    #             game_idx = relevant_game_idx[x]
+    #
+    #             batch_target[0, x] = reversed_targets[game_idx][pos]
+    #
+    #     # pass
 
-    def clear_test_results(self, result_file="results"):
-        f = open(result_file + ".csv", 'w')
+    def clear_test_results(self):
+        f = open(self.result_file, 'w')
         f.write("Number of games, Number of wins, Number of defeats, Number of ties\n")
         f.close()
 
-    def test(self, opponent: ai.AI, num_test_games: int = 2000, result_file="results", verbose=False):
+    def test(self, opponent: ai.AI, num_test_games: int = 1, verbose=False):
+        assert not verbose or (num_test_games == 1)  # implication: verbose => num_test_games is 1
 
         results = {
             -1: 0,  # player 0 wins
@@ -96,12 +112,14 @@ class Training:
 
         print("Results", results)
 
-        if result_file is not None:
-            text = str(num_test_games) + ", " + str(results[1]) + ", " + str(results[-1]) + ", "+str(results[0]) + "\n"
-            f = open(result_file + ".csv", 'a')
+        if self.result_file is not None:
+            text = str(num_test_games) + ", " + str(results[1]) + ", " + str(results[-1]) + ", " + str(
+                results[0]) + "\n"
+            f = open(self.result_file, 'a')
             f.write(text)
             f.close()
 
+    # noinspection PyUnboundLocalVariable,PyArgumentList
     def test_game(self, opponent: ai.AI, verbose=False, draw_graph=False):
         assert opponent is not None
         ais = {
@@ -133,13 +151,12 @@ class Training:
 
         return abs_winner
 
-    def store(self, name):
+    def store(self, name=None):
         self.train_ai.store(name)
 
 
 def draw_graph_layer(g_all: gv.Digraph, cur_state: game.State, action: game.Action = None,
-                     new_state: game.State = None, last_ratings = None, is_top_node=False, ):
-
+                     new_state: game.State = None, last_ratings=None, is_top_node=False, ):
     with g_all.subgraph(name='cluster_' + str(cur_state.round + (0 if is_top_node else 1))) as c:
         c.attr(style='filled')
         c.attr(color='lightgrey')
@@ -149,7 +166,7 @@ def draw_graph_layer(g_all: gv.Digraph, cur_state: game.State, action: game.Acti
             c.node(cur_state.id, label=cur_state.to_graphviz(), style="filled", fillcolor="limegreen",
                    shape="rectangle", margin="0.5")
         else:
-            for (possible_action, q_value) in last_ratings: # ais[cur_player].last_ratings:
+            for (possible_action, q_value) in last_ratings:  # ais[cur_player].last_ratings:
                 action_label = possible_action.to_graphviz() + "\n" + "Q-Value: " + str(round(float(q_value), 3))
                 if action.move == possible_action.move:
                     c.node(new_state.id, label=new_state.to_graphviz(), style="filled",

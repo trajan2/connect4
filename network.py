@@ -8,6 +8,7 @@ class Network:
     def __init__(self, in_dim: int, file_name: str, hiddens=(100, 100)):
         assert file_name is not None
         self.file_name = file_name+ ".h5"
+
         if os.path.exists(self.file_name):
             print("Load model", self.file_name)
             self.model = load_model(self.file_name)
