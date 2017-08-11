@@ -27,7 +27,7 @@ class Training:
             action = ais[cur_ai_id].next_exploring_move(cur_state, self.exploration)
             state_action_list.append((cur_state, action))
             cur_state = game.play(cur_state, action)
-            last = cur_state.winner is None and not last
+            last = cur_state.winner is not None and not last
             cur_ai_id = 1 - cur_ai_id
 
         # invariant: each state has infinite following states (even if game is already over)
@@ -58,7 +58,7 @@ class Training:
         #     self.ai.qnet.train(net_input, target)  # actual training
         pass
 
-    def calc_targets(self, state_action_list):
+    def calc_reversed_targets(self, state_action_list):
         # second try: rewards are directly known because of total sequence
         target_one = 0.0
         target_two = 0.0
@@ -73,30 +73,57 @@ class Training:
             target_list.append(target)
         return target_list
 
-    # def train_batch(self, games_list):
-    #     reversed_games = [reversed(x) for x in games_list]
-    #     reversed_targets = [reversed(self.calc_targets(x)) for x in games_list]
-    #     max_len = max(len(x) for x in games_list)
-    #
-    #     for pos in range(max_len):
-    #         relevant_game_idx = [ind for ind, cur_game in enumerate(games_list) if len(cur_game) > pos]
-    #
-    #         batch_input = np.empty((self.train_ai.input_dim, len(relevant_game_idx)))
-    #         batch_target = np.empty((1, len(relevant_game_idx)))
-    #
-    #         for x in range(len(relevant_game_idx)):
-    #             game_idx = relevant_game_idx[x]
-    #
-    #             batch_target[0, x] = reversed_targets[game_idx][pos]
-    #
-    #     # pass
+    # WARNING
+    # in combination with calc_reversed_targets this leads to a bad target vector = n * (1 1 .... 1)
+    def train_batch_deprecated(self, games_list):
+        reversed_games = [list(zip(reversed(x), self.calc_reversed_targets(x))) for x in games_list]
+        max_len = max(len(x) for x in games_list)
+
+        for pos in range(max_len):
+            relevant_games = [x for x in reversed_games if len(x) > pos]
+
+            batch_input = np.empty((len(relevant_games), self.train_ai.input_dim,))
+            batch_target = np.empty((len(relevant_games), 1))
+
+            for ind, cur_game in enumerate(relevant_games):
+                (state, action), target = cur_game[pos]
+                # state, action = state_action
+
+                batch_input[ind, :] = game.create_net_input(state, action)
+                batch_target[ind, 0] = target
+
+            print(batch_input)
+            print(batch_target)
+
+            self.train_ai.qnet.train(batch_input, batch_target)
+
+    def train_batch(self, games_list, batch_size=100):
+        sat_list = []  # (state, action, target) list
+
+        for cur_game in games_list:
+            targets = reversed(self.calc_reversed_targets(cur_game))
+            cur_sat = [(state, action, target) for ((state, action), target) in zip(cur_game, targets)]
+            sat_list.extend(cur_sat)
+
+        np.random.shuffle(sat_list)
+        chunks = [sat_list[i:i + batch_size] for i in range(0, len(sat_list), batch_size)]
+
+        for chunk in chunks:
+            batch_input = np.empty((len(chunk), self.train_ai.input_dim,))
+            batch_target = np.empty((len(chunk), 1))
+
+            for ind, (state, action, target) in enumerate(chunk):
+                batch_input[ind, :] = game.create_net_input(state, action)
+                batch_target[ind, 0] = target
+
+            self.train_ai.qnet.train(batch_input, batch_target)
 
     def clear_test_results(self):
         f = open(self.result_file, 'w')
-        f.write("Number of games, Number of wins, Number of defeats, Number of ties\n")
+        f.write("Number of games trained, Number of games tested, Number of wins, Number of defeats, Number of ties\n")
         f.close()
 
-    def test(self, opponent: ai.AI, num_test_games: int = 1, verbose=False):
+    def test(self, opponent: ai.AI, epochs_trained, num_test_games: int = 1, verbose=False):
         assert not verbose or (num_test_games == 1)  # implication: verbose => num_test_games is 1
 
         results = {
@@ -106,14 +133,14 @@ class Training:
         }
 
         for x in range(num_test_games):
-            print("Test number", x)
             abs_winner = self.test_game(opponent, verbose)
             results[abs_winner] += 1
 
-        print("Results", results)
+        print("Test results", results)
 
         if self.result_file is not None:
-            text = str(num_test_games) + ", " + str(results[1]) + ", " + str(results[-1]) + ", " + str(
+            text = str(epochs_trained) + ", " + str(num_test_games) + ", " + str(results[1]) + ", " + str(
+                results[-1]) + ", " + str(
                 results[0]) + "\n"
             f = open(self.result_file, 'a')
             f.write(text)
